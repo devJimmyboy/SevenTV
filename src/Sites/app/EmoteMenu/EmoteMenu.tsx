@@ -6,6 +6,7 @@ import { DataStructure } from '@typings/typings/DataStructure';
 import React from 'react';
 import styled from 'styled-components';
 import BaseButton from '@material-ui/core/ButtonBase';
+import Settings from '@material-ui/icons/Settings';
 
 const providers = ['7TV', 'BTTV', 'FFZ'] as DataStructure.Emote.Provider[];
 
@@ -73,7 +74,9 @@ export class EmoteMenu extends React.Component<EmoteMenu.Props, EmoteMenu.State>
 					<input placeholder='Search Emotes...' onChange={ev => this.onSearchChange(ev)}>
 
 					</input>
+					<EmoteMenu.SettingsIcon className='seventv-emote-menu-settings' onClick={()=>this.props.main.openSettings()}/>
 				</EmoteMenu.Search>
+
 			</EmoteMenu.Styled>
 		);
 	}
@@ -160,6 +163,9 @@ export namespace EmoteMenu {
 
 	`;
 	export const EmoteListSection = styled.section`
+
+	`;
+	export const SettingsIcon = styled(Settings)`
 
 	`;
 }

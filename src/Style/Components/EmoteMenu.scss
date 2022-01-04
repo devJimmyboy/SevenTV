@@ -1,35 +1,53 @@
 .seventv-emote-menu {	
 	position: absolute;
+    background-color: var(--seventv-color-background-0);
+    border: outset;
+    border-color: var(--seventv-color-background-hl0);
 
 	.seventv-emote-menu-header {
-		background-color: var(--seventv-color-background-1);
+		background-color: var(--seventv-color-background-0);
 		display: flex;
 		flex-direction: row;
 		justify-content: space-between;
-		border-radius: 0.4rem;
+		height: 4em;
+		margin: 0.15em;
 	}
 	.seventv-emote-menu-scrollable {
-		background-color: var(--seventv-color-background-0);
+		background-color: var(--seventv-color-background-1);
 		padding-top: 1em;
-		border-radius: 0.6rem;
 		width: 30rem;
 		height: 30rem;
+		border: inset 0.2em var(--seventv-color-background-1);
 		overflow: auto;
+		margin-bottom: 0.2em;
+		margin: 0.15em;
+		box-shadow: inset 0 0 0.5em black;
+
+		&::-webkit-scrollbar {
+			background: transparent;
+			width: 0.5em;
+		}
+		&::-webkit-scrollbar-thumb {
+			border: solid 0.1em var(--seventv-text-color);
+			border-radius: 0.5rem;
+			background: var(--seventv-color-background-0);
+		}
 	}
 	.seventv-emote-menu-tab {
-		background-color: var(--seventv-color-background-1);
+		background-color: var(--seventv-color-background-0);
 		display: flex;
 		justify-content: center;
 		flex-grow: 1;
-		min-height: 3em;
+		height: auto;
+		border: solid 0.2em transparent;
 
 		&.selected {
-			border-bottom: 0.1rem solid white !important;
+			background-color: var(--seventv-color-background-1);
+			border: inset 0.2em var(--seventv-color-background-1);
 		}
 	}
 	.seventv-emote-menu-emote-list-section {
-		margin-top: 1em;
-		margin-left: 1em;
+		margin: 0 1em 1em 1em;
 	}
 	.seventv-emote-menu-category-header {
 		display: flex;
@@ -46,35 +64,48 @@
 		flex-wrap: wrap;
 
 		margin-top: 1em;
-		margin-right: .25em;
-		margin-left: 1.25em;
+		margin-right: 0.5em;
+		margin-left: 0.5em;
 		margin-bottom: 1em;
 
 		span {
-			margin-right: .2em;
-			margin-left: .2em;
+			margin-right: .1em;
+			margin-left: .1em;
 			margin-top: .1em;
 			margin-bottom: .1em;
 		}
 	}
 	.seventv-emote-menu-search {
 		background-color: var(--seventv-background-color);
+		display: flex;
+		height: 3em;
+		padding: 0.15em;
+
 
 		input {
-			width: 95%;
-			height: 3em;
-			color: white;
-			border-color: white;
-			border-width: 0.1rem;
-			border-style: solid;
-			border-radius: 0.4rem;
+			width: 100%;
+			height: auto;
+			border: inset 0.2em var(--seventv-color-background-1);
 			background-color: var(--seventv-color-background-1);
+			color: var(--seventv-text-color);
 			padding: .5em;
 	
 			&:focus {
 				outline: none !important;
-				border: 0.1rem solid rgb(0, 195, 255) ;
 				box-shadow: 0 0 1rem rgb(0, 195, 255) !important;
+			}
+		}
+		.seventv-emote-menu-settings {
+			right: 0;
+			margin-left: .1em;
+			height: auto;
+			width: auto;
+			cursor: pointer;
+			border: outset 0.2em var(--seventv-color-background-1);
+			font-size: inherit !important;
+
+			&:active {
+				border: inset 0.2em var(--seventv-color-background-1);
 			}
 		}
 	}
