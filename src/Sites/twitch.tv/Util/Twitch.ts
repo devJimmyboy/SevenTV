@@ -435,6 +435,7 @@ export namespace Twitch {
 		type: number;
 		reply: unknown;
 		user: ChatUser;
+		timestamp: number;
 
 		// Other third party things
 		ffz_tokens?: {
@@ -499,5 +500,31 @@ export namespace Twitch {
 		userID: string;
 		userLogin: string;
 		userType: string;
+	}
+
+	export interface ChatCommand {
+		name: string;
+		description: string;
+		helpText: string; 				// Gets called by /help
+		permissionLevel: 0|1|2|3;
+		handler?: ChatCommand.Callback;
+		commandArgs?: {
+				name: string;
+				isRequired: boolean;
+		}[];
+		hidden?: boolean;
+		allowEditorUsage?: boolean;
+		group?: string;
+	}
+	export namespace ChatCommand {
+		export interface Callback {
+			(args: string, context?: {channelLogin: string}): void | {
+				deferred: Promise<{
+					notice: string;			// Message send in chat on sucess
+					error?: string; 		// If an error is provided the notice will show as a popup instead of in the chat
+					inputValue?: string; 	// Dosn't do anything?
+				}>
+			};
+		}
 	}
 }
