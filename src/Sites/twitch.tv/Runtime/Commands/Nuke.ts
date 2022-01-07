@@ -5,14 +5,16 @@ import { CommandManager } from 'src/Sites/twitch.tv/Runtime/CommandManager';
 /**
  *  ToDo list:
  *      Update help text.
- *      Set ratelimit for nuke to prevent shadowban of the user.
- *      Store a log of the nuke that can be called to undo all the bans/timeouts.
  *      Log messages better and remove them after a certain time.
+ * 		Currently it stores all messages until a reload which is not optimal.
  */
 
 export class Nuke extends BaseCommand {
 
-	private messageLog: Twitch.ChatMessage[] = [];
+	private messageLog =  new Set<Twitch.ChatMessage>();
+	private bucket = new RateBucket(100);
+	private lastNuke: string | undefined = undefined;
+	private executed = new Set<string>();
 
 	constructor (private manager: CommandManager) {
 		super(manager);
@@ -26,16 +28,18 @@ export class Nuke extends BaseCommand {
 
 	remove() {
 		this.manager.removeCommand(this.command);
+		if (this.lastNuke) this.manager.removeCommand(this.undoCommand);
 		this.twitch.getChatController().props.messageHandlerAPI.addMessageHandler(this.messageHandler);
 	}
 
 	private messageHandler = (msg: Twitch.ChatMessage) => {
-		if (msg.type == 0) this.messageLog.push(msg);
+		if (msg.type == 0) this.messageLog.add(msg);
 	}
 
-	async execute(args: NukeArgs): Promise<number> {
+	async execute(args: NukeArgs): Promise<string> {
 		const start = Date.now() - (args.before * 1000);
 		const controller = this.twitch.getChatController();
+		this.executed.clear();
 
 		const msgBuilder = (msg: Twitch.ChatMessage) => {
 			switch(args.action) {
@@ -48,24 +52,25 @@ export class Nuke extends BaseCommand {
 			}
 		};
 
-		const myID = this.twitch.getChatController().props.userID;
+		const myID = controller.props.userID;
 		let ammount = 0;
-		let executed = new Set<string>();
 
 		const check = (msg: Twitch.ChatMessage) => {
 			if (msg.type !== 0 || msg.user.userID == myID || msg.user.userType == 'mod') return;
-			if (args.action != 'delete' && executed.has(msg.user.userID)) return;
+			if (args.action != 'delete' && this.executed.has(msg.user.userLogin)) return;
 
 			if (args.pattern.test(msg.messageBody)) {
-				controller.sendMessage(msgBuilder(msg), undefined);
-				executed.add(msg.user.userID);
-				ammount += 1;
+				if (this.bucket.take()){
+					controller.sendMessage(msgBuilder(msg), undefined);
+					this.executed.add(msg.user.userLogin);
+					ammount += 1;
+				}
 			}
 		};
 
-		for (const msg of this.messageLog.reverse()){
+		for (const msg of Array.from(this.messageLog).reverse()){
 			if (msg.timestamp < start) break;
-				check(msg);
+			check(msg);
 		}
 
 		if (args.after) {
@@ -80,7 +85,19 @@ export class Nuke extends BaseCommand {
 			}, args.after * 1000);
 		}
 
-		return ammount;
+		this.manager.removeCommand(this.undoCommand);
+		this.lastNuke = args.pattern.toString();
+
+		if (args.action !== 'delete') this.manager.addCommand(this.undoCommand);
+
+		switch(args.action) {
+			case 'delete':
+				return `Deleted ${ammount} messages containing ${args.pattern}`;
+			case 'ban':
+				return `Banned ${ammount} users matching ${args.pattern} . Undo with /undo`;
+			default:
+				return `Timed out ${ammount} users matching ${args.pattern} for ${args.action} . Undo with /undo` ;
+		}
 
 	}
 
@@ -115,12 +132,12 @@ export class Nuke extends BaseCommand {
 
 		return {
 			deferred: this.execute(parsed)
-				.then((ammount: number) => {
+				.then((message: string) => {
 					return {
-						notice: `Nuked ${ammount} users!`
+						notice: message
 					};
 				})
-			};
+		};
 	}
 
 	command: Twitch.ChatCommand = {
@@ -145,11 +162,31 @@ export class Nuke extends BaseCommand {
 		],
 		group: '7TV'
 	};
+
+	undoCommand: Twitch.ChatCommand = {
+		name: 'undo',
+		description: `Undo the last nuke`,
+		helpText: 'Usage: "/undo undo\'s the last nuke. If the last nuke was close to 100 to twitch\'s rate limit might be a hinderance, and you should wait 30 seconds.',
+		permissionLevel: 2,
+		handler: () => {
+			const controller = this.twitch.getChatController();
+			const ammount = this.executed.size;
+			this.executed.forEach(userLogin => controller?.sendMessage(`.unban ${userLogin}`, undefined));
+			this.executed.clear();
+
+			this.lastNuke = undefined;
+			return {
+				deferred: Promise.resolve({
+					notice: `Removed timeout/ban on ${ammount} users.`
+			})};
+		},
+		group: '7TV'
+	};
 }
 
 namespace re {
 	export const isRegex = new RegExp('\/(?<pattern>.+)\/(?<params>[gimyused]*)');
-	export const nukeArgs = new RegExp('^(?<pattern>.*) (?<action>(delete|ban|[0-9]+[dhms])) ?(?<before>[0-9]+[dhmsDHMS]):?(?<after>([0-9]+[dhms])?) ?(?<reason>.*)', 'i');
+	export const nukeArgs = new RegExp('^(?<pattern>.+) (?<action>(delete|ban|[0-9]+[dhms])) (?<before>[0-9]+[dhmsDHMS])(:(?<after>([0-9]+[dhms])))?( (?<reason>.+))?$', 'i');
 }
 
 interface NukeArgs {
@@ -165,5 +202,28 @@ namespace errors {
 		export const pattern = 'Invalid pattern. Usage <pattern/regex> either text that will be searched for or a regex pattern in the form /pattern/ .';
 		export const timebounds = 'Invalid timebounds. Usage: <past:future> -> 10m:5m or 10m if no percistence into the future. An integer, followed by d for day, h for hour, m for minute, s for second.';
 		export const action = 'Invalid action. Usage: <action> is either ban, delete or timeout in the format 10s or 5m etc.';
+	}
+}
+
+class RateBucket {
+	tokens: number;
+	constructor(private capacity: number) {
+		this.tokens = capacity;
+		setInterval(() => this.addToken(),  30000 / capacity );
+	}
+
+	addToken() {
+		if (this.tokens < this.capacity) {
+			this.tokens += 1;
+		}
+	}
+
+	take() {
+		if (this.tokens > 0) {
+			this.tokens -= 1;
+			return true;
+		}
+
+		return false;
 	}
 }

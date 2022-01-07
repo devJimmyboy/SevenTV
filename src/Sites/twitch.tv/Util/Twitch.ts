@@ -512,13 +512,13 @@ export namespace Twitch {
 		name: string;
 		description: string;
 		helpText: string; 				// Gets called by /help
-		permissionLevel: 0|1|2|3;
+		permissionLevel: 0|1|2|3;		// Anyone, vip, mod, broadcaster (editor if allowEditorUsage is true)
 		handler?: ChatCommand.Handler;
 		commandArgs?: {
 				name: string;
 				isRequired: boolean;
 		}[];
-		hidden?: boolean;
+		hidden?: boolean;				// Makes the command not appear in the preview, but will still be callable.
 		allowEditorUsage?: boolean;
 		group?: string;
 	}
