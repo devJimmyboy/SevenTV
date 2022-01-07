@@ -11,6 +11,7 @@ import { SiteApp } from 'src/Sites/app/SiteApp';
 import { map } from 'rxjs/operators';
 import { MessagePatcher } from 'src/Sites/twitch.tv/Util/MessagePatcher';
 import type { EventAPI } from 'src/Global/Events/EventAPI';
+import { CommandManager } from 'src/Sites/twitch.tv/Runtime/CommandManager';
 
 export class TwitchPageScript {
 	site = new SiteApp();
@@ -19,6 +20,7 @@ export class TwitchPageScript {
 	inputManager = inputManager = new InputManager(this);
 	avatarManager = new AvatarManager(this);
 	banSliderManager = new BanSliderManager(this);
+	commandManager = new CommandManager(this);
 
 	currentChannel = '';
 	currentChannelSet: EmoteStore.EmoteSet | null = null;
@@ -87,6 +89,7 @@ export class TwitchPageScript {
 					inputManager.listen();
 					this.isActorVIP = controller.props.isCurrentUserVIP;
 					this.site.sendMessageUp('EventAPI:AddChannel', login);
+					this.commandManager.initialize();
 				});
 		};
 

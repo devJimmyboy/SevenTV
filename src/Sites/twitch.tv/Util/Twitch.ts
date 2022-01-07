@@ -502,12 +502,18 @@ export namespace Twitch {
 		userType: string;
 	}
 
+	export interface CommandNode {
+		addCommand: (v:ChatCommand) => void;
+		getCommands: (v:ChatCommand['permissionLevel']) => ChatCommand[];
+		removeCommand: (v:ChatCommand) => void;
+	}
+
 	export interface ChatCommand {
 		name: string;
 		description: string;
 		helpText: string; 				// Gets called by /help
 		permissionLevel: 0|1|2|3;
-		handler?: ChatCommand.Callback;
+		handler?: ChatCommand.Handler;
 		commandArgs?: {
 				name: string;
 				isRequired: boolean;
@@ -517,7 +523,7 @@ export namespace Twitch {
 		group?: string;
 	}
 	export namespace ChatCommand {
-		export interface Callback {
+		export interface Handler {
 			(args: string, context?: {channelLogin: string}): void | {
 				deferred: Promise<{
 					notice: string;			// Message send in chat on sucess
