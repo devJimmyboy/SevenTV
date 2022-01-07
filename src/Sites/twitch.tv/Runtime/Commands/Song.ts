@@ -1,4 +1,3 @@
-import { Logger } from 'src/Logger';
 import { CommandManager } from 'src/Sites/twitch.tv/Runtime/CommandManager';
 import { BaseCommand } from 'src/Sites/twitch.tv/Runtime/Commands/BaseCommand';
 import { Twitch } from 'src/Sites/twitch.tv/Util/Twitch';
