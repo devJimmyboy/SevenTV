@@ -303,11 +303,11 @@ export class TwitchChatListener {
 		const msgBuilder = (msg: Twitch.ChatMessage) => {
 			switch(action) {
 				case 'ban':
-					return `.ban ${msg.user} Nuked`;
+					return `.ban ${msg.user.userLogin} Nuked`;
 				case 'delete':
 					return `.delete ${msg.id}`;
 				default:
-					return `.timeout ${msg.user} ${action} Nuked`;
+					return `.timeout ${msg.user.userLogin} ${action} Nuked`;
 			}
 		};
 
