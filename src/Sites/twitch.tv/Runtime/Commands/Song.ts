@@ -1,5 +1,5 @@
-import { CommandManager } from 'src/Sites/twitch.tv/Runtime/CommandManager';
 import { BaseCommand } from 'src/Sites/twitch.tv/Runtime/Commands/BaseCommand';
+import { TwitchPageScript } from 'src/Sites/twitch.tv/twitch';
 import { Twitch } from 'src/Sites/twitch.tv/Util/Twitch';
 
 /**
@@ -10,20 +10,12 @@ import { Twitch } from 'src/Sites/twitch.tv/Util/Twitch';
 
 export class Song extends BaseCommand {
 
-	APITOKEN = 'notimplemented';
+	private oauth = this.main.site.config.get('audd')?.asString();
 
-	constructor(private manager: CommandManager){
-		super(manager);
-		if (this.APITOKEN === 'notimplemented') return;
-		this.add();
-	}
-
-	add(){
-		this.manager.addCommand(this.command);
-	}
-
-	remove(){
-		this.manager.removeCommand(this.command);
+	constructor(main: TwitchPageScript){
+		super(main);
+		if (!this.oauth) return;
+		super.add(this.command);
 	}
 
 	async doRequest(blobs: Blob[]): Promise<ApiResponse>{
@@ -33,7 +25,7 @@ export class Song extends BaseCommand {
 
 		let fd = new FormData();
 
-		fd.append('api_token', this.APITOKEN);
+		fd.append('api_token', this.oauth!);
 		fd.append('file', file);
 		fd.append('return', 'apple_music,spotify');
 

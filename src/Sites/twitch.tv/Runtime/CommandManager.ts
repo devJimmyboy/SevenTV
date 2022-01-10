@@ -22,7 +22,7 @@ export class CommandManager {
 		this.overrideGrouper();
 
 		Object.values(Modules).forEach( module => {
-				this.commands.add(new module(this));
+				this.commands.add(new module(this.main));
 
 		});
 	}

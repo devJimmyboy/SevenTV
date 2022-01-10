@@ -1,11 +1,15 @@
-import { CommandManager } from 'src/Sites/twitch.tv/Runtime/CommandManager';
+
+import { TwitchPageScript } from 'src/Sites/twitch.tv/twitch';
 import { Twitch } from 'src/Sites/twitch.tv/Util/Twitch';
 
 export abstract class BaseCommand {
-	twitch: Twitch;
-	constructor(manager: CommandManager) { this.twitch = manager.twitch; }
-	abstract add(): void;
-	abstract remove(): void;
-	abstract command: Twitch.ChatCommand;
-	abstract handler: Twitch.ChatCommand.Handler;
+	manager = this.main.commandManager;
+	twitch = this.manager.twitch;
+	constructor(public main: TwitchPageScript) {}
+	add(this: BaseCommand, cmd: Twitch.ChatCommand) {
+		this.manager.addCommand(cmd);
+	}
+	remove(this: BaseCommand, cmd: Twitch.ChatCommand) {
+		this.manager.removeCommand(cmd);
+	}
 }

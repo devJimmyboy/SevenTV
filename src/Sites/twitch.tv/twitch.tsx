@@ -43,6 +43,7 @@ export class TwitchPageScript {
 	 * cause major memory leak problems.
 	 */
 	constructor() {
+		(window as any).seventv = this;
 		this.handleChannelSwitch();
 		this.avatarManager.check();
 

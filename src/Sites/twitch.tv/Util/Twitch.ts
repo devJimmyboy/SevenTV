@@ -524,7 +524,7 @@ export namespace Twitch {
 	}
 	export namespace ChatCommand {
 		export interface Handler {
-			(args: string, context?: {channelLogin: string}): void | {
+			(args: string, context: {channelLogin: string}): void | {
 				deferred: Promise<{
 					notice: string;			// Message send in chat on sucess
 					error?: string; 		// If an error is provided the notice will show as a popup instead of in the chat

@@ -1,6 +1,6 @@
 import { Twitch } from 'src/Sites/twitch.tv/Util/Twitch';
 import { BaseCommand } from 'src/Sites/twitch.tv/Runtime/Commands/BaseCommand';
-import { CommandManager } from 'src/Sites/twitch.tv/Runtime/CommandManager';
+import { TwitchPageScript } from 'src/Sites/twitch.tv/twitch';
 
 /**
  *  ToDo list:
@@ -16,19 +16,19 @@ export class Nuke extends BaseCommand {
 	private lastNuke: string | undefined = undefined;
 	private executed = new Set<string>();
 
-	constructor (private manager: CommandManager) {
-		super(manager);
+	constructor (main: TwitchPageScript) {
+		super(main);
 		this.add();
 	}
 
 	add() {
-		this.manager.addCommand(this.command);
+		super.add(this.command);
 		this.twitch.getChatController().props.messageHandlerAPI.addMessageHandler(this.messageHandler);
 	}
 
 	remove() {
-		this.manager.removeCommand(this.command);
-		if (this.lastNuke) this.manager.removeCommand(this.undoCommand);
+		super.remove(this.command);
+		if (this.lastNuke) super.remove(this.undoCommand);
 		this.twitch.getChatController().props.messageHandlerAPI.addMessageHandler(this.messageHandler);
 	}
 
@@ -85,10 +85,10 @@ export class Nuke extends BaseCommand {
 			}, args.after * 1000);
 		}
 
-		this.manager.removeCommand(this.undoCommand);
+		super.remove(this.undoCommand);
 		this.lastNuke = args.pattern.toString();
 
-		if (args.action !== 'delete') this.manager.addCommand(this.undoCommand);
+		if (args.action !== 'delete') super.add(this.undoCommand);
 
 		switch(args.action) {
 			case 'delete':
