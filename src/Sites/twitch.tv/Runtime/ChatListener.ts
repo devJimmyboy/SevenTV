@@ -57,8 +57,6 @@ export class TwitchChatListener {
 				});
 			}
 		}
-
-		// Set up an add chat commands
 	}
 
 	listen(): void {

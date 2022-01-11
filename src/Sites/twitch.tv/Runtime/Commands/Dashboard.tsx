@@ -1,12 +1,16 @@
+import { EmoteStore } from 'src/Global/EmoteStore';
 import { Logger } from 'src/Logger';
 import { BaseCommand } from 'src/Sites/twitch.tv/Runtime/Commands/BaseCommand';
 import { TwitchPageScript } from 'src/Sites/twitch.tv/twitch';
 import { Twitch } from 'src/Sites/twitch.tv/Util/Twitch';
+import { assetStore } from 'src/Sites/app/SiteApp';
+
+import React, { } from 'react';
 
 /**
  *  ToDo list:
  * 		Need to implement a way to get the jwt token before this can be used.
- *      Implement the ablility to enable emotes.
+ *      Need better help/error messages
  */
 
 export class Dashboard extends BaseCommand {
@@ -45,6 +49,7 @@ export class Dashboard extends BaseCommand {
 		const json = await res.json();
 		const editor_ids: string[] = json?.data?.user?.editor_ids;
 
+		// This could probably be stored since its bound to the jwt
 		const res2 = await fetch('https://api.7tv.app/v2/users/' + info.userID);
 		if (!res2.ok) throw new Error;
 
@@ -73,7 +78,7 @@ export class Dashboard extends BaseCommand {
 		return;
 	}
 
-	async handleRequest(query: string, variables: variables) {
+	async handleRequest(query: string, variables: any) {
 		const res = await this.sendRequest(query, variables);
 
 		if (!res.ok) {
@@ -95,7 +100,7 @@ export class Dashboard extends BaseCommand {
 		};
 	}
 
-	async sendRequest(query: string, variables: variables) {
+	async sendRequest(query: string, variables: any) {
 		return fetch('https://api.7tv.app/v2/gql',
 			{
 				method: 'POST',
@@ -111,11 +116,100 @@ export class Dashboard extends BaseCommand {
 		);
 	}
 
+	async queryEmotes(name: string) {
+		const res = await this.sendRequest(querys.search, {
+				// \b to always search for start of word
+				query: '\\b' + name,
+				page: 1,
+				pageSize: 16,
+				limit: 16,
+				sortBy: 'popularity',
+				sortOrder: 0,
+			}
+		);
+
+		if (!res.ok) return undefined;
+
+		const json = await res.json();
+
+		return json.data.search_emotes;
+	}
+
 	async handleEnable(args: string) {
-		return {
-			notice: 'This command has not been implemented yet. ' + args,
-			error: 'Not implemented'
-		};
+		const [name, ...reason] = args.split(' ').filter(n=>n);
+
+		const emotes = await this.queryEmotes(name);
+
+		if (!emotes) {
+			return {
+				notice: 'Could not find any emotes named: ' + name,
+				error: 'Input error'
+			};
+		}
+
+		const store = new EmoteStore.EmoteSet('search');
+		store.push(emotes);
+
+		const tray = this.twitch.searchUp(Twitch.Selectors.ChatInput, n=>n.stateNode.props.setModifierTray, 100);
+
+		return await new Promise<{notice: string, error?: string}>(resolve => {
+			const onClick = (e: any, id: string) => {
+				e.stopPropagation();
+
+				if (e.ctrlKey) {
+					window.open('https://7tv.app/emotes/' + id, '_blank');
+					return;
+				}
+
+				this.handleRequest(querys.enable, {
+					ch: this.currentChannelID!,
+					em: id,
+					re: reason.join(' ') ?? 'Edited from twitch chat'
+				})
+				.then(res => {
+						tray.props.clearModifierTray();
+						resolve(res);
+				});
+			};
+
+			tray.props.setModifierTray({
+				body:
+					<div className='seventv-tray'>
+						<div className='header'>
+							<span className='logo'>
+								<img src={assetStore.get('7tv.webp')}/>
+							</span>
+							<span className='text'>
+								<text>
+									Click to enable.
+								</text>
+							</span>
+							<span className='close' onClick={() => {
+									tray.props.clearModifierTray();
+									resolve({notice: ''});
+								}}>
+								<text>
+									&#10006;
+								</text>
+							</span>
+						</div>
+						<div className='body'>
+							{store.getEmotes().map( emote => (
+								<span title={`${emote.name} by ${emote.owner?.display_name}`} key={emote.id} onClick={e=>onClick(e, emote.id)}>
+									<img src={emote.cdn('2')}/>
+								</span>
+							))}
+						</div>
+					</div>,
+				floating: true,
+			});
+
+		}).catch(() => {
+			return {
+				notice: 'Could not enable emote',
+				error: 'Api error'
+			};
+		});
 	}
 
 	async handleDisable(args: string) {
@@ -174,17 +268,17 @@ export class Dashboard extends BaseCommand {
 
 	commandEnable: Twitch.ChatCommand = {
 		name: 'enable',
-		description: 'Enable a 7tv emote',
+		description: 'Enable a 7TV emote',
 		helpText: '',
 		permissionLevel: 0,
 		handler: (args) => { return { deferred: this.handleEnable(args) }; },
 		commandArgs: [
 			{
-				name: 'Emote',
+				name: 'emote',
 				isRequired: true
 			},
 			{
-				name: 'Reason',
+				name: 'reason',
 				isRequired: false
 			}
 		],
@@ -199,11 +293,11 @@ export class Dashboard extends BaseCommand {
 		handler: (args) => { return { deferred: this.handleDisable(args) }; },
 		commandArgs: [
 			{
-				name: 'Emote',
+				name: 'emote',
 				isRequired: true
 			},
 			{
-				name: 'Reason',
+				name: 'reason',
 				isRequired: false
 			}
 		],
@@ -218,15 +312,15 @@ export class Dashboard extends BaseCommand {
 		handler: (args) => { return { deferred: this.handleAlias(args) }; },
 		commandArgs: [
 			{
-				name: 'Current',
+				name: 'current',
 				isRequired: true
 			},
 			{
-				name: 'New',
+				name: 'new',
 				isRequired: true
 			},
 			{
-				name: 'Reason',
+				name: 'reason',
 				isRequired: false
 			}
 		],
@@ -239,7 +333,13 @@ const emoteNameRegex = new RegExp(`^[-_A-Za-z():0-9]{2,100}$`);
 
 
 const querys = {
-	enable: '',
+	enable: `
+		mutation AddChannelEmote($ch: String!, $em: String!, $re: String!) {
+			addChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {
+				emote_ids
+			}
+		}
+	`,
 	disable: `
 		mutation RemoveChannelEmote($ch: String!, $em: String!, $re: String!) {
 			removeChannelEmote(channel_id: $ch, emote_id: $em, reason: $re) {
@@ -260,15 +360,36 @@ const querys = {
 				editor_ids
 			}
 		}
+	`,
+	search: `
+		query($query: String!,$page: Int,$pageSize: Int,$globalState: String,$sortBy: String,$sortOrder: Int,$channel: String,$submitted_by: String,$filter: EmoteFilter) {
+			search_emotes(query: $query,limit: $pageSize,page: $page,pageSize: $pageSize,globalState: $globalState,sortBy: $sortBy,sortOrder: $sortOrder,channel: $channel,submitted_by: $submitted_by,filter: $filter) {
+				id,
+				name,
+				owner {
+					id,
+					twitch_id,
+					login,
+					display_name,
+					role {
+						id,
+						name,
+						position,
+						color,
+						allowed,
+						denied
+					}
+				},
+				visibility,
+				mime,
+				status,
+				tags,
+				width,
+				height,
+				urls,
+				provider
+			}
+		}
+
 	`
 };
-
-interface variables {
-	id?: string;
-	ch?: string;
-	em?: string;
-	data?: {
-		alias?: string;
-	};
-	re?: string;
-}

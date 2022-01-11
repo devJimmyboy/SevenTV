@@ -79,3 +79,60 @@
 		}
 	}
 }
+
+.seventv-tray {
+	display: block;
+
+	.header {
+		max-height: 4em;
+		display: flex;
+		justify-content: space-between;
+		padding: 0.2em;
+		padding-bottom: 0.5em;
+		border-bottom: 1px solid var(--color-border-base);
+		margin: 0.2em;
+
+		.logo {
+			width: 3em;
+			height: 3em;
+		}
+
+		.text {
+			color: var(--color-text-alt) !important;
+			font-size: var(--font-size-5) !important;
+			word-break: break-word !important;
+			font-weight: var(--font-weight-semibold) !important;
+			font: inherit;
+			margin: auto;
+		}
+
+		.close {
+			border-radius: 0.5rem;
+			width: 3em;
+			height: 3em;
+			cursor: pointer;
+			text-align: center;
+			padding-top: 0.8em;
+
+			text {
+				user-select: none;
+			}
+
+			&:hover {
+				background-color: var(--color-background-button-text-hover);
+			}
+		}
+	}
+	
+	.body {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-evenly;
+		margin: 0.5em;
+		padding-top: 0.5em;
+		span {
+			margin: 0.2em;
+			cursor: pointer;
+		}
+	}
+}

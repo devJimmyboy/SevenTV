@@ -2,6 +2,18 @@ import * as React from 'react';
 import { MessagePatcher } from 'src/Sites/twitch.tv/Util/MessagePatcher';
 
 export class Twitch {
+
+	// This might not be "nessecary" but makes it a but more usable
+	searchUp(search: string, predicate: Twitch.FindReactInstancePredicate, maxDepth = 15, depth = 0) {
+		const node = document.querySelector(search);
+		if (!node) return null;
+		const inst = this.getReactInstance(node);
+		if (!inst) return null;
+		const parent = this.findReactParents(inst, predicate, maxDepth, depth);
+		if (!parent) return null;
+		return parent.stateNode;
+	}
+
 	findReactParents(node: any, predicate: Twitch.FindReactInstancePredicate, maxDepth = 15, depth = 0): Twitch.AnyPureComponent | null {
 		let success = false;
 		try { success = predicate(node); } catch (_) {}
