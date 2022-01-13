@@ -2,8 +2,10 @@
 
 ### Version 2.1.2
 
-- Clicking a twitch emote now opens the emote card.
-- Fixed an issue with some paint styles.
+- Twitch: Added support for 7TV in embeds
+- Twitch: Added colon-completion (use : to get a list of emotes matching your input)
+- Nametag Paints now support multiple drop shadows, transparency blending and cover international names
+- Clicking a twitch emote now opens the emote card
 
 ### Version 2.1.1
 

@@ -43,7 +43,10 @@ export class TwitchPageScript {
 	 * cause major memory leak problems.
 	 */
 	constructor() {
+		if (!window.location.href.match(this.channelRegex)) return;
+
 		(window as any).seventv = this;
+
 		this.handleChannelSwitch();
 		this.avatarManager.check();
 
@@ -90,6 +93,7 @@ export class TwitchPageScript {
 					inputManager.listen();
 					this.isActorVIP = controller.props.isCurrentUserVIP;
 					this.site.sendMessageUp('EventAPI:AddChannel', login);
+					this.insertEmotesIntoAutocomplete();
 					this.commandManager.initialize();
 				});
 		};
@@ -143,6 +147,41 @@ export class TwitchPageScript {
 		return this.site.emoteStore;
 	}
 
+	insertEmotesIntoAutocomplete() {
+		if (this.ffzMode) return;
+
+		const emoteProvider = this.twitch.getAutocompleteHandler().providers[0];
+		const store = this.emoteStore;
+
+		const x = emoteProvider.renderEmoteSuggestion;
+		emoteProvider.renderEmoteSuggestion = function(e: Twitch.TwitchEmote) {
+			if (e.__typename === 'SeventvEmote') {
+				e.srcSet = store.getEmote(e.id)?.urls.reduce((prev, current) =>
+					`${prev} ${current[1]} ${current[0]}x,`
+				, '');
+			}
+			return x.call(this, e);
+		};
+
+		emoteProvider.props.emotes.push({
+			emotes: this.emoteStore.getAllEmotes(['7TV', 'BTTV', 'EMOJI', 'FFZ']).map(emote => {
+				return {
+					id: emote.id.toString(),
+					setID: '-1',
+					token: emote.name,
+					type: emote.provider,
+					__typename: 'SeventvEmote'
+				};
+			}),
+			id: '-1',
+			__typename: 'SeventvEmoteSet'
+		});
+
+
+
+
+	}
+
 	getCurrentChannelFromURL(): string {
 		return window.location.href.match(this.channelRegex)?.[3] ?? '';
 	}
@@ -169,6 +208,10 @@ export class TwitchPageScript {
 	@PageScriptListener('Cease')
 	whenUpperLayerRequestsThePageScriptStopsSendingChatLinesUpstream(): void {
 		ffzMode = true;
+
+		let sets = this.twitch.getAutocompleteHandler()?.providers[0].props.emotes;
+		if (sets) sets = sets.filter(s=>s.__typename !== 'SeventvEmoteSet');
+
 		Logger.Get().info('Received Cease Signal -- pagescript will stop.');
 	}
 

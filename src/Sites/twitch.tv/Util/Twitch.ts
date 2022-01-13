@@ -108,6 +108,15 @@ export class Twitch {
 		return node?.stateNode;
 	}
 
+	getAutocompleteHandler(): Twitch.ChatAutocompleteComponent {
+		const node = this.findReactParents(
+			this.getReactInstance(document.querySelector('textarea[data-a-target=chat-input]')),
+			n => n.stateNode.providers
+		);
+
+		return node?.stateNode;
+	}
+
 	getEmotePicker(): Twitch.AnyPureComponent {
 		const node = this.findReactParents(
 			this.getReactInstance(document.querySelector('[data-a-target=emote-picker]')),
@@ -372,6 +381,60 @@ export namespace Twitch {
 		onValueUpdate: (v: any) => void;
 	}>;
 
+	export type ChatAutocompleteComponent = {
+		getMatches: (v: string) => TwitchEmote[]
+		props: {
+			channelID: string;
+			channelLogin: string;
+			clearModifierTray: () => void;
+			clearReplyToList: () => void;
+			closeCard: () => void;
+			closeKeyboardReplyTray: () => void;
+			currentUserDisplayName: string;
+			currentUserID: string;
+			currentUserLogin: string;
+			emotes: TwitchEmoteSet[];
+			isCurrentUserEditor: boolean;
+			isCurrentUserModerator: boolean;
+			isCurrentUserStaff: boolean;
+			messageBufferAPI: any;
+			onFocus: (v: any) => any;
+			onKeyDown: (v: any) => any;
+			onMatch: (e: any, t: any, i: any) => any;
+			onReset: (v: any) => any;
+			onValueUpdate: (v: any) => any;
+			setInputValue: (v: any) => any;
+			setModifierTray: (v: any) => any;
+			setReplyToList: (v: any) => any;
+			setTray: (v: any) => any;
+			showModerationIcons: boolean;
+			showTimestamps: boolean;
+			tray: any;
+			useHighContrastColors: boolean;
+		};
+		providers: Provider[];
+	};
+
+	export type Provider = {
+		autocompleteType: string
+		canBeTriggeredByTab: boolean
+		doesEmoteMatchTerm: (e: TwitchEmote, t: string) => boolean;
+		getMatchedEmotes: (s: string) => TwitchEmote[]
+		getMatches: (s: string) => TwitchEmote[]
+		props: {
+			emotes: TwitchEmoteSet[];
+			isEmoteAnimationsEnabled: boolean;
+			registerAutocompleteProvider: (p: Provider) => void;
+			theme: Theme;
+		};
+		renderEmoteSuggestion: (e: TwitchEmote) => TwitchEmote
+	};
+
+	export enum Theme {
+		'Light',
+		'Dark'
+	}
+
 	export interface EmoteCardOpener {
 		onShowEmoteCard: (v: any) => void;
 	}
@@ -385,11 +448,12 @@ export namespace Twitch {
 			login: string;
 			profileImageURL: string;
 		};
+		__typename?: string;
 	}
 
 	export interface TwitchEmote {
 		id: string;
-		modifiers: any;
+		modifiers?: any;
 		setID: string;
 		token: string;
 		type: string;
@@ -399,6 +463,8 @@ export namespace Twitch {
 			login: string;
 			profileImageURL: string;
 		};
+		__typename?: string;
+		srcSet?: string;
 	}
 
 	export interface BadgeSets {
