@@ -144,15 +144,30 @@ class Settings {
 					hint: 'If checked, the 7TV emote menu located under the chat box will not be visible',
 					type: 'checkbox',
 					defaultValue: false
-				}
-				,
+				},
 				{
 					id: 'ui.show_moderation_slider',
 					label: 'Show moderation slider',
 					hint: 'If checked, the moderation slider will be visible in channels you moderate',
 					type: 'checkbox',
 					defaultValue: true
+				},
+				{
+					id: 'jwt',
+					label: 'Set 7TV auth token for use with custom commands',
+					hint: '',
+					type: 'input',
+					defaultValue: ''
 				}
+				,
+				{
+					id: 'audd',
+					label: 'Set AudD oauth token for use with custom commands',
+					hint: '',
+					type: 'input',
+					defaultValue: ''
+				}
+
 
 			);
 		}
@@ -206,7 +221,7 @@ export interface SettingNode {
 	disabledIf?: () => boolean;
 }
 export namespace SettingNode {
-	export type Type = 'select' | 'checkbox';
+	export type Type = 'select' | 'checkbox' | 'input';
 }
 
 export const settings = new Settings();

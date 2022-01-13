@@ -22,6 +22,7 @@ export class Dashboard extends BaseCommand {
 	constructor(main: TwitchPageScript){
 		super(main);
 		if (!this.jwt) return;
+		this.jwt = 'Bearer ' + this.jwt;
 		this.setCurrentChannelId()
 			.then(() => {
 				return this.hasPermission();

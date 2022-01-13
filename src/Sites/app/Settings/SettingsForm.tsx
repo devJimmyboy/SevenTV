@@ -30,7 +30,6 @@ export class SettingsForm extends React.Component<SettingsForm.Props> {
 								}></FormControlLabel>;
 							break;
 
-
 						case 'select':
 							result =
 								<div>
@@ -38,6 +37,20 @@ export class SettingsForm extends React.Component<SettingsForm.Props> {
 									<RadioGroup style={{ marginLeft: '14px'}} name='Test' sx={{ '.MuiFormControlLabel-label': { fontSize: '1em', color: 'currentcolor' }, '.MuiButtonBase-root': { color: 'currentcolor' } }} onChange={ev => this.handleSelectChange(s, ev)} value={(this.props.main.app?.config.get(s.id)?.asString() ?? s.defaultValue) as string}>
 											{s.options?.map((option) => <FormControlLabel style={{textTransform:'capitalize'}} value={option} key={option} control={<Radio />} label={option} /> )}
 									</RadioGroup>
+								</div>;
+							break;
+
+						//Very temp, but works
+						case 'input':
+							result =
+								<div>
+									<FormLabel component='legend' style={{ fontSize: '1em', color: 'currentcolor', margin: '14px 0 0 14px'}}>{s.label}</FormLabel>
+									<form style={{margin: '10px 0 0 14px'}} onSubmit={() => this.handleInputChange(s)}>
+										<label >
+											<input style={{backgroundColor: 'transparent', color: 'currentColor', marginRight: '6px', border: 'solid 1px', borderRadius: '0.2em', height: '2rem'}} value={(this.props.main.app?.config.get(s.id)?.asString() ? '***' : s.defaultValue) as string} onChange={ev => {s.value = ev.target.value; this.setState({});}}/>
+										</label>
+										<input type='submit' value='Save'/>
+									</form>
 								</div>;
 							break;
 
@@ -75,6 +88,13 @@ export class SettingsForm extends React.Component<SettingsForm.Props> {
 		sNode.value = value;
 		this.props.main.app?.config.set(sNode.id, new SettingValue(value));
 		this.props.main.app?.sendMessageUp('SetConfigNode', { key: `cfg.${sNode.id}`, value: value });
+
+		this.setState({});
+		this.props.main.setState({});
+	}
+
+	handleInputChange(sNode: SettingNode): void {
+		this.props.main.app?.sendMessageUp('SetConfigNode', { key: `cfg.${sNode.id}`, value: sNode.value});
 
 		this.setState({});
 		this.props.main.setState({});
