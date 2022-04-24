@@ -44,6 +44,10 @@ div[id="content"]
 .seventv-overlay {
 	display: flex;
 	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	background-color: transparent;
 	color: var(--seventv-text-color);
 
@@ -74,6 +78,11 @@ div[id="content"]
 
 .emoji {
 	height: 1.95em !important;
+}
+
+// Move the YouTube Slowmode countdown back over the Send button
+.yt-live-chat-message-input-renderer#countdown {
+	left: -73px;
 }
 
 .seventv-message-context > :first-child {
